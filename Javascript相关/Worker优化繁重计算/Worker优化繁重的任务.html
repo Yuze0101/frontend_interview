@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="X-UA-Compatible"
+      content="IE=edge"
+    />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Worker</title>
+  </head>
+  <style>
+    .box {
+      width: 100px;
+      height: 100px;
+      background-color: aqua;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      width: 200px;
+    }
+  </style>
+  <body>
+    <div class="container">
+      <p>同步运行繁重任务，js计算阻塞线程，操作无响应</p>
+      <p>worker进行繁重任务，不阻塞线程，操作可响应</p>
+      <p>请打开控制台，看log</p>
+      <div class="box"></div>
+      <button id="changeColor">随机切换颜色</button>
+      <button id="runHeavyWork">同步运行繁重任务</button>
+      <button id="runHeavyWorkWithWorker">worker运行繁重任务</button>
+    </div>
+  </body>
+  <script>
+    let box = document.querySelector('.box')
+    let container = document.querySelector('.container')
+    let changeColor = document.querySelector('#changeColor')
+    let runHeavyWork = document.querySelector('#runHeavyWork')
+    let runHeavyWorkWithWorker = document.querySelector(
+      '#runHeavyWorkWithWorker'
+    )
+    // 模拟用户操作，app响应
+    changeColor.addEventListener('click', () => {
+      let rgb =
+        'rgb(' +
+        Math.floor(Math.random() * 256) +
+        ',' +
+        Math.floor(Math.random() * 256) +
+        ',' +
+        Math.floor(Math.random() * 256) +
+        ')'
+      box.style.backgroundColor = rgb
+    })
+    runHeavyWork.addEventListener('click', () => {
+      heavyWork()
+    })
+
+    // 创建worker实例
+    const myWorker = new Worker('./worker.js')
+    runHeavyWorkWithWorker.addEventListener('click', () => {
+      // 给worker发消息
+      myWorker.postMessage('runHeavyWorkWithWorker')
+    })
+
+    // worker接收消息，推入事件队列
+    myWorker.onmessage = function (e) {
+      if (e.data == 'done') {
+        addDoneText()
+      }
+    }
+    // 模拟高计算量的任务
+    function heavyWork() {
+      for (let i = 2; i < 10000; i++) {
+        for (let j = 2; j < i; j++) {
+          if (i % j === 0) {
+            console.log(j)
+          }
+        }
+      }
+      addDoneText()
+    }
+
+    function addDoneText() {
+      let doneNode = document.createElement('p')
+      doneNode.innerText = '完成繁重任务'
+      container.appendChild(doneNode)
+      console.log('myWorker done')
+    }
+  </script>
+</html>
